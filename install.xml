@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<!DOCTYPE modification SYSTEM "http://www.simplemachines.org/xml/modification">
+<modification xmlns="http://www.simplemachines.org/xml/modification" xmlns:smf="http://www.simplemachines.org/">
+	<id>NEND:smartcache</id>
+	<version>0.0.1</version>
+	<file name="$sourcedir/Load.php">
+		<operation>
+			<search position="before"><![CDATA[		// Do a few things to protect against missing settings or settings with invalid values...
+		if (empty($modSettings['defaultMaxTopics']) || $modSettings['defaultMaxTopics'] <= 0 || $modSettings['defaultMaxTopics'] > 999)
+			$modSettings['defaultMaxTopics'] = 20;
+		if (empty($modSettings['defaultMaxMessages']) || $modSettings['defaultMaxMessages'] <= 0 || $modSettings['defaultMaxMessages'] > 999)
+			$modSettings['defaultMaxMessages'] = 15;
+		if (empty($modSettings['defaultMaxMembers']) || $modSettings['defaultMaxMembers'] <= 0 || $modSettings['defaultMaxMembers'] > 999)
+			$modSettings['defaultMaxMembers'] = 30;]]></search>
+			<add><![CDATA[
+		// Smart Cache
+		$load = sys_getloadavg();
+		$modSettings['load_average'] = $load[0];
+]]></add>
+		</operation>
+		<operation>
+			<search position="after"><![CDATA[	// UTF-8 in regular expressions is unsupported on PHP(win) versions < 4.2.3.
+	$utf8 = (empty($modSettings['global_character_set']) ? $txt['lang_character_set'] : $modSettings['global_character_set']) === 'UTF-8' && (strpos(strtolower(PHP_OS), 'win') === false || @version_compare(PHP_VERSION, '4.2.3') != -1);]]></search>
+			<add><![CDATA[
+	// Smart Cache
+	if (!empty($modSettings['load_average'])) {
+		$modSettings['cache_load_time'] = cache_get_data('load_time', 90);
+		if($modSettings['load_average'] > 5 && $modSettings['cache_enable'] < 2 || !empty($modSettings['cache_load_time']) && $modSettings['cache_load_time'] >= 0.5 && $modSettings['cache_load_time'] < 1)
+			$modSettings['cache_enable'] = 2;
+		if($modSettings['load_average'] > 7 && $modSettings['cache_enable'] < 3 || !empty($modSettings['cache_load_time']) && $modSettings['cache_load_time'] >= 1)
+			$modSettings['cache_enable'] = 3;
+	}
+]]></add>
+		</operation>
+	</file>
+	<file name="$sourcedir/Subs.php">
+		<operation>
+			<search position="before"><![CDATA[	// Show the load time?  (only makes sense for the footer.)
+	$context['show_load_time'] = !empty($modSettings['timeLoadPageEnable']);
+	$context['load_time'] = round(array_sum(explode(' ', microtime())) - array_sum(explode(' ', $time_start)), 3);
+	$context['load_queries'] = $db_count;]]></search>
+			<add><![CDATA[
+	//Smart Cache
+	if (empty($modSettings['cache_load_time']) || $context['load_time'] > $modSettings['cache_load_time']) {
+		$modSettings['cache_load_time'] = $context['load_time'];
+		cache_put_data('load_time', $context['load_time'], 90);
+	}
+]]></add>
+		</operation>
+	</file>
+</modification>
