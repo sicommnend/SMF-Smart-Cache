@@ -7,6 +7,7 @@
 	<type>modification</type>
 <install>
 	<readme parsebbc="true">license.txt</readme>
+	<code>install.php</code>
 	<modification format="xml" type="file">install.xml</modification>
 </install>
 <uninstall>
