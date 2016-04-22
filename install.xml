@@ -13,23 +13,23 @@
 		if (empty($modSettings['defaultMaxMembers']) || $modSettings['defaultMaxMembers'] <= 0 || $modSettings['defaultMaxMembers'] > 999)
 			$modSettings['defaultMaxMembers'] = 30;]]></search>
 			<add><![CDATA[
+
 		// Smart Cache
 		$load = sys_getloadavg();
-		$modSettings['load_average'] = $load[0];
-]]></add>
+		$modSettings['load_average'] = $load[0];]]></add>
 		</operation>
 		<operation>
 			<search position="after"><![CDATA[	// UTF-8 in regular expressions is unsupported on PHP(win) versions < 4.2.3.
 	$utf8 = (empty($modSettings['global_character_set']) ? $txt['lang_character_set'] : $modSettings['global_character_set']) === 'UTF-8' && (strpos(strtolower(PHP_OS), 'win') === false || @version_compare(PHP_VERSION, '4.2.3') != -1);]]></search>
-			<add><![CDATA[
-	// Smart Cache
+			<add><![CDATA[	// Smart Cache
 	if (!empty($modSettings['load_average'])) {
 		$modSettings['cache_load_time'] = cache_get_data('load_time', 90);
-		if($modSettings['load_average'] > 5 && $modSettings['cache_enable'] < 2 || !empty($modSettings['cache_load_time']) && $modSettings['cache_load_time'] >= 0.5 && $modSettings['cache_load_time'] < 1)
+		if($modSettings['load_average'] > $modSettings['smartcache_l2'] && $modSettings['cache_enable'] < 2 || !empty($modSettings['cache_load_time']) && $modSettings['cache_load_time'] >= 0.5 && $modSettings['cache_load_time'] < 1)
 			$modSettings['cache_enable'] = 2;
-		if($modSettings['load_average'] > 7 && $modSettings['cache_enable'] < 3 || !empty($modSettings['cache_load_time']) && $modSettings['cache_load_time'] >= 1)
+		if($modSettings['load_average'] > $modSettings['smartcache_l3'] && $modSettings['cache_enable'] < 3 || !empty($modSettings['cache_load_time']) && $modSettings['cache_load_time'] >= 1)
 			$modSettings['cache_enable'] = 3;
 	}
+
 ]]></add>
 		</operation>
 	</file>
@@ -40,12 +40,12 @@
 	$context['load_time'] = round(array_sum(explode(' ', microtime())) - array_sum(explode(' ', $time_start)), 3);
 	$context['load_queries'] = $db_count;]]></search>
 			<add><![CDATA[
+
 	//Smart Cache
 	if (empty($modSettings['cache_load_time']) || $context['load_time'] > $modSettings['cache_load_time']) {
 		$modSettings['cache_load_time'] = $context['load_time'];
 		cache_put_data('load_time', $context['load_time'], 90);
-	}
-]]></add>
+	}]]></add>
 		</operation>
 	</file>
 </modification>
