@@ -2,7 +2,7 @@
 <!DOCTYPE modification SYSTEM "http://www.simplemachines.org/xml/modification">
 <modification xmlns="http://www.simplemachines.org/xml/modification" xmlns:smf="http://www.simplemachines.org/">
 	<id>NEND:smartcache</id>
-	<version>0.0.1</version>
+	<version>0.0.2</version>
 	<file name="$sourcedir/Load.php">
 		<operation>
 			<search position="before"><![CDATA[		// Do a few things to protect against missing settings or settings with invalid values...
@@ -31,6 +31,35 @@
 	}
 
 ]]></add>
+		</operation>
+		<operation>
+			<search position="replace"><![CDATA[		if (($modSettings['load_average'] = cache_get_data('loadavg', 90)) == null)
+		{
+			$modSettings['load_average'] = @file_get_contents('/proc/loadavg');
+			if (!empty($modSettings['load_average']) && preg_match('~^([^ ]+?) ([^ ]+?) ([^ ]+)~', $modSettings['load_average'], $matches) != 0)
+				$modSettings['load_average'] = (float) $matches[1];
+			elseif (($modSettings['load_average'] = @`uptime`) != null && preg_match('~load average[s]?: (\d+\.\d+), (\d+\.\d+), (\d+\.\d+)~i', $modSettings['load_average'], $matches) != 0)
+				$modSettings['load_average'] = (float) $matches[1];
+			else
+				unset($modSettings['load_average']);
+
+			if (!empty($modSettings['load_average']))
+				cache_put_data('loadavg', $modSettings['load_average'], 90);
+		}]]></search>
+			<add><![CDATA[/* Smart Cache is now handling this.
+		if (($modSettings['load_average'] = cache_get_data('loadavg', 90)) == null)
+		{
+			$modSettings['load_average'] = @file_get_contents('/proc/loadavg');
+			if (!empty($modSettings['load_average']) && preg_match('~^([^ ]+?) ([^ ]+?) ([^ ]+)~', $modSettings['load_average'], $matches) != 0)
+				$modSettings['load_average'] = (float) $matches[1];
+			elseif (($modSettings['load_average'] = @`uptime`) != null && preg_match('~load average[s]?: (\d+\.\d+), (\d+\.\d+), (\d+\.\d+)~i', $modSettings['load_average'], $matches) != 0)
+				$modSettings['load_average'] = (float) $matches[1];
+			else
+				unset($modSettings['load_average']);
+
+			if (!empty($modSettings['load_average']))
+				cache_put_data('loadavg', $modSettings['load_average'], 90);
+		}*/]]></add>
 		</operation>
 	</file>
 	<file name="$sourcedir/Subs.php">
